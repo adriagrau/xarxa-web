@@ -32,17 +32,17 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
 
-      - name: 5. Subir a IONOS por SFTP nativo
+- name: 5. Subir a IONOS por SFTP nativo
         env:
           SFTP_HOST: ${{ secrets.SFTP_HOST }}
           SFTP_USER: ${{ secrets.SFTP_USER }}
           SFTP_PASS: ${{ secrets.SFTP_PASSWORD }}
         run: |
           sudo apt-get install -y sshpass
-          export SSHPASS="$SFTP_PASS"
+          ENCODED_PASS=$(echo -n "$SFTP_PASS" | base64)
+          export SSHPASS=$(echo "$ENCODED_PASS" | base64 --decode)
           echo "cd /clickandbuilds/XarxaMujeres/web/" > sftp_commands.txt
           echo "lcd out" >> sftp_commands.txt
           echo "mput -r *" >> sftp_commands.txt
           echo "bye" >> sftp_commands.txt
           sshpass -e sftp -o StrictHostKeyChecking=no -P 22 -b sftp_commands.txt "$SFTP_USER@$SFTP_HOST"
-          # Forzar activacion
