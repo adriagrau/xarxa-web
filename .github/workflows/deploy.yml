@@ -44,3 +44,4 @@ jobs:
           echo "mput -r *" >> sftp_commands.txt
           echo "bye" >> sftp_commands.txt
           sshpass -e sftp -o StrictHostKeyChecking=no -P 22 -b sftp_commands.txt "$SFTP_USER@$SFTP_HOST"
+          # Forzar activacion
