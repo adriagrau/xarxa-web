@@ -1,0 +1,46 @@
+name: Desplegar en IONOS por SFTP
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  web-deploy:
+    name: Compilar y Subir
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 3. Instalar dependencias
+        run: npm install
+
+      - name: 4. Compilar la web estática (npm run build)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+
+      - name: 5. Subir a IONOS por SFTP nativo
+        env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_USER: ${{ secrets.SFTP_USER }}
+          SFTP_PASS: ${{ secrets.SFTP_PASSWORD }}
+        run: |
+          sudo apt-get install -y sshpass
+          export SSHPASS="$SFTP_PASS"
+          echo "cd /clickandbuilds/XarxaMujeres/web/" > sftp_commands.txt
+          echo "lcd out" >> sftp_commands.txt
+          echo "mput -r *" >> sftp_commands.txt
+          echo "bye" >> sftp_commands.txt
+          sshpass -e sftp -o StrictHostKeyChecking=no -P 22 -b sftp_commands.txt "$SFTP_USER@$SFTP_HOST"
