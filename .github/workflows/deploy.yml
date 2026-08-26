@@ -32,16 +32,19 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
 
-      - name: 5. Subir a IONOS por SFTP nativo
+      - name: 5. Subir a IONOS por SFTP mediante Clave SSH
         env:
           SFTP_HOST: ${{ secrets.SFTP_HOST }}
           SFTP_USER: ${{ secrets.SFTP_USER }}
-          SFTP_PASS: ${{ secrets.SFTP_PASSWORD }}
+          SFTP_PASS: ${{ secrets.SFTP_PASS }}
         run: |
-          sudo apt-get update && sudo apt-get install -y sshpass
-          # Escribimos los comandos SFTP en un fichero limpio
+          # Creamos la estructura para la clave SSH privada
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SFTP_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Creamos el fichero de comandos sftp
           printf "cd /clickandbuilds/XarxaMujeres/web/\nlcd out\nmput -r *\nbye\n" > sftp_commands.txt
-          # Guardamos la contraseña en un archivo temporal ignorando cualquier espacio o salto de línea fantasma
-          echo -n "$SFTP_PASS" > sftp_pass.txt
-          # Ejecutamos sftp pasando la contraseña desde el archivo (evitando errores de bash)
-          sshpass -f sftp_pass.txt sftp -o StrictHostKeyChecking=no -P 22 -b sftp_commands.txt "$SFTP_USER@$SFTP_HOST"
+          
+          # Nos conectamos usando la clave privada directamente
+          sftp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -P 22 -b sftp_commands.txt "$SFTP_USER@$SFTP_HOST"
