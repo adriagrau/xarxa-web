@@ -3,6 +3,7 @@ name: Desplegar en IONOS por SFTP
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   web-deploy:
