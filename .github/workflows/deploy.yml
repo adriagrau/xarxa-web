@@ -1,5 +1,5 @@
 name: Desplegar en IONOS por SFTP
-#comentar
+
 on:
   push:
     branches: [ "main" ]
@@ -39,6 +39,9 @@ jobs:
           SFTP_PASS: ${{ secrets.SFTP_PASSWORD }}
         run: |
           sudo apt-get update && sudo apt-get install -y sshpass
+          # Escribimos los comandos SFTP en un fichero limpio
           printf "cd /clickandbuilds/XarxaMujeres/web/\nlcd out\nmput -r *\nbye\n" > sftp_commands.txt
-          export SSHPASS="$(echo "$SFTP_PASS" | base64 --decode)"
-          sshpass -e sftp -o StrictHostKeyChecking=no -P 22 -b sftp_commands.txt "$SFTP_USER@$SFTP_HOST"
+          # Guardamos la contraseña en un archivo temporal ignorando cualquier espacio o salto de línea fantasma
+          echo -n "$SFTP_PASS" > sftp_pass.txt
+          # Ejecutamos sftp pasando la contraseña desde el archivo (evitando errores de bash)
+          sshpass -f sftp_pass.txt sftp -o StrictHostKeyChecking=no -P 22 -b sftp_commands.txt "$SFTP_USER@$SFTP_HOST"
